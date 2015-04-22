@@ -1,9 +1,9 @@
-#appname: unit-testing-alloy-projects
-#appid: nl.denver.unit-testing-alloy-projects
-#type: mobile
-#guid: ccfd0852-c407-4270-aec7-10c77bf22692
-#version: 1.0
-#publisher: not specified
-#url: not specified
-#image: appicon.png
-#desc: not specified
+#appname:unit-testing-alloy-projects
+#appid:com.bliss.proscorner
+#type:ipad
+#guid:ccfd0852-c407-4270-aec7-10c77bf22692
+#version:1.0
+#publisher:dsessink
+#url:http://
+#image:appicon.png
+#desc:not specified
