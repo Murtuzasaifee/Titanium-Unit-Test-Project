@@ -1,14 +1,14 @@
 function S4() {
-    return ((1 + Math.random()) * 65536 | 0).toString(16).substring(1);
+    return (65536 * (1 + Math.random()) | 0).toString(16).substring(1);
 }
 
 function guid() {
     return S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4();
 }
 
-function InitAdapter(config) {
+function InitAdapter() {
     if (!db) {
-        if (Ti.Platform.osname === "mobileweb" || typeof Ti.Database == "undefined") throw "No support for Titanium.Database in MobileWeb environment.";
+        if ("mobileweb" === Ti.Platform.osname || "undefined" == typeof Ti.Database) throw "No support for Titanium.Database in MobileWeb environment.";
         db = Ti.Database.open("_alloy_");
         module.exports.db = db;
         db.execute("CREATE TABLE IF NOT EXISTS migrations (latest TEXT, model TEXT)");
@@ -30,24 +30,29 @@ function SQLiteMigrateDB() {
           case "varchar":
           case "text":
             return "TEXT";
+
           case "int":
           case "tinyint":
           case "smallint":
           case "bigint":
           case "integer":
             return "INTEGER";
+
           case "double":
           case "float":
           case "real":
             return "REAL";
+
           case "blob":
             return "BLOB";
+
           case "decimal":
           case "number":
           case "date":
           case "datetime":
           case "boolean":
             return "NUMERIC";
+
           case "null":
             return "NULL";
         }
@@ -57,7 +62,7 @@ function SQLiteMigrateDB() {
         Ti.API.info("create table migration called for " + config.adapter.collection_name);
         var self = this, columns = [];
         for (var k in config.columns) columns.push(k + " " + self.column(config.columns[k]));
-        var sql = "CREATE TABLE IF NOT EXISTS " + config.adapter.collection_name + " ( " + columns.join(",") + ",id" + " )";
+        var sql = "CREATE TABLE IF NOT EXISTS " + config.adapter.collection_name + " ( " + columns.join(",") + ",id )";
         Ti.API.info(sql);
         db.execute(sql);
     };
@@ -83,6 +88,7 @@ function Sync(model, method, opts) {
         model.id = id;
         resp = model.toJSON();
         break;
+
       case "read":
         var sql = "SELECT * FROM " + table, rs = db.execute(sql), len = 0, values = [];
         while (rs.isValidRow()) {
@@ -98,8 +104,9 @@ function Sync(model, method, opts) {
         }
         rs.close();
         model.length = len;
-        len === 1 ? resp = values[0] : resp = values;
+        resp = 1 === len ? values[0] : values;
         break;
+
       case "update":
         var names = [], values = [], q = [];
         for (var k in columns) {
@@ -107,11 +114,13 @@ function Sync(model, method, opts) {
             values.push(model.get(k));
             q.push("?");
         }
-        var sql = "UPDATE " + table + " SET " + names.join(",") + " WHERE id=?", e = sql + "," + values.join(",") + "," + model.id;
+        var sql = "UPDATE " + table + " SET " + names.join(",") + " WHERE id=?";
+        sql + "," + values.join(",") + "," + model.id;
         values.push(model.id);
         db.execute(sql, values);
         resp = model.toJSON();
         break;
+
       case "delete":
         var sql = "DELETE FROM " + table + " WHERE id=?";
         db.execute(sql, model.id);
@@ -120,7 +129,7 @@ function Sync(model, method, opts) {
     }
     if (resp) {
         _.isFunction(opts.success) && opts.success(resp);
-        method === "read" && model.trigger("fetch");
+        "read" === method && model.trigger("fetch");
     } else _.isFunction(opts.error) && opts.error("Record not found");
 }
 
@@ -132,7 +141,7 @@ function GetMigrationForCached(t, m) {
 }
 
 function Migrate(migrations, config) {
-    var prev, sqlMigration = new SQLiteMigrateDB, migrationIds = {};
+    var prev, sqlMigration = new SQLiteMigrateDB(), migrationIds = {};
     db.execute("BEGIN;");
     if (migrations.length) {
         _.each(migrations, function(migration) {

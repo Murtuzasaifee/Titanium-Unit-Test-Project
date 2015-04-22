@@ -19,20 +19,27 @@ function Expectation(v) {
 }
 
 function writeJUnitXMLFile(tests) {
-    var xmlString = "";
-    xmlString = '<testsuite name="Main">\n';
+    var xmlString = '<?xml version="1.0" ?>';
+    xmlString += "<testsuites>\n";
+    xmlString += '<testsuite name="Main">\n';
     _.each(tests, function(test, index) {
-        if (test.suite && test.suite === !0) if (0 === index) xmlString = '<testsuite name="' + test.name + '">\n'; else {
+        if (test.suite && true === test.suite) if (0 === index) {
+            xmlString = '<?xml version="1.0"?>\n';
+            xmlString += "<testsuites>\n";
+            xmlString += '<testsuite name="' + test.name + '">\n';
+        } else {
             xmlString += "</testsuite>";
             xmlString += '<testsuite name="' + test.name + '">\n';
         } else {
             xmlString += '<testcase name="' + test.name + '">\n';
-            test.success === !1 && (xmlString += '<failure type="NotEnoughFoo"> ' + test.name + " </failure>\n");
+            false === test.success && (xmlString += '<failure type="NotEnoughFoo"> ' + test.name + " </failure>\n");
             xmlString += "</testcase>\n";
         }
     });
-    xmlString += "</testsuite>";
-    var fileloc = "/tmp/junit-buildresults.xml", newFile = Titanium.Filesystem.getFile("/tmp", "junit-buildresults.xml");
+    xmlString += "</testsuite>\n";
+    xmlString += "</testsuites>";
+    var fileloc = "/tmp/junit-buildresults.xml";
+    var newFile = Titanium.Filesystem.getFile("/tmp", "junit-buildresults.xml");
     newFile.createFile();
     if (newFile.exists()) {
         newFile.write(xmlString);
@@ -40,20 +47,23 @@ function writeJUnitXMLFile(tests) {
     }
 }
 
-var suites = [], output = [], specCount = 0, failures = 0, successes = 0, tests = [];
+var suites = [], output = [], specCount = 0, failures = 0, successes = 0;
+
+var tests = [];
 
 Suite.prototype.evaluate = function(cb) {
     tests.push({
-        suite: !0,
+        suite: true,
         name: this.desc
     });
     log("Describing " + this.desc + ":");
-    var executing = !1, that = this, timer = setInterval(function() {
+    var executing = false, that = this;
+    var timer = setInterval(function() {
         if (that.specs.length > 0 && !executing) {
-            executing = !0;
+            executing = true;
             var s = that.specs.shift();
             s.evaluate(function() {
-                executing = !1;
+                executing = false;
             });
         } else if (0 === that.specs.length && !executing) {
             clearInterval(timer);
@@ -73,16 +83,19 @@ Spec.prototype.addExpectation = function(ex) {
 Spec.prototype.evaluate = function(cb) {
     log("it " + this.desc);
     specCount++;
-    if (this.async) var time = 0, that = this, timer = setInterval(function() {
-        if (that.expectations.length > 0 && that.done) {
-            var ex = that.expectations.shift();
-            ex.evaluate();
-        } else if (0 === that.expectations.length && that.done || time > that.timeout || 1e4) {
-            clearInterval(timer);
-            cb();
-        }
-        time += 50;
-    }, 50); else {
+    if (this.async) {
+        var time = 0, that = this;
+        var timer = setInterval(function() {
+            if (that.expectations.length > 0 && that.done) {
+                var ex = that.expectations.shift();
+                ex.evaluate();
+            } else if (0 === that.expectations.length && that.done || time > that.timeout || 1e4) {
+                clearInterval(timer);
+                cb();
+            }
+            time += 50;
+        }, 50);
+    } else {
         for (var i = 0, l = this.expectations.length; l > i; i++) {
             var ex = this.expectations[i];
             ex.evaluate();
@@ -124,12 +137,12 @@ Expectation.prototype.evaluate = function() {
         successes++;
         log("I expected " + this.someValue + " " + this.comparisonText + " " + this.otherValue);
         test.name = "I expected " + this.someValue + " " + this.comparisonText + " " + this.otherValue;
-        test.success = !0;
+        test.success = true;
     } else {
         failures++;
         log("I incorrectly got " + this.someValue + ", when I expected " + this.otherValue);
         test.name = "I incorrectly got " + this.someValue + ", when I expected " + this.otherValue;
-        test.success = !1;
+        test.success = false;
     }
     tests.push(test);
 };
@@ -147,10 +160,10 @@ exports.andSetup = function(global) {
                 return ex;
             };
             specClosure();
-            SPEC.done = !0;
+            SPEC.done = true;
         };
         global.it.eventually = function(specDesc, specClosure, timeout) {
-            var SPEC = new Spec(specDesc, !0, timeout);
+            var SPEC = new Spec(specDesc, true, timeout);
             SUITE.addSpec(SPEC);
             global.expect = function(someValue) {
                 var ex = new Expectation(someValue);
@@ -158,7 +171,7 @@ exports.andSetup = function(global) {
                 return ex;
             };
             specClosure(function() {
-                SPEC.done = !0;
+                SPEC.done = true;
             });
         };
         suiteClosure();
@@ -172,12 +185,13 @@ exports.run = function() {
     output = [];
     log("");
     log("Oh, behave! Testing in progress...");
-    var executing = !1, timer = setInterval(function() {
+    var executing = false;
+    var timer = setInterval(function() {
         if (suites.length > 0 && !executing) {
-            executing = !0;
+            executing = true;
             var s = suites.shift();
             s.evaluate(function() {
-                executing = !1;
+                executing = false;
             });
         } else if (0 === suites.length && !executing) {
             log("");

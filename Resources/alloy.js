@@ -14,12 +14,12 @@ exports.Backbone = Backbone;
 
 exports.M = function(name, modelDesc, migrations) {
     var config = modelDesc.config, type = (config.adapter ? config.adapter.type : null) || "localDefault";
-    type === "localDefault" && (type = "sql");
+    "localDefault" === type && (type = "sql");
     var adapter = require("alloy/sync/" + type), extendObj = {
         defaults: config.defaults,
         sync: function(method, model, opts) {
-            var config = model.config || {}, adapterObj = config.adapter || {}, type = (config.adapter ? config.adapter.type : null) || "localDefault";
-            type === "localDefault" && (type = "sql");
+            var config = model.config || {}, type = (config.adapter || {}, (config.adapter ? config.adapter.type : null) || "localDefault");
+            "localDefault" === type && (type = "sql");
             require("alloy/sync/" + type).sync(model, method, opts);
         }
     }, extendClass = {};
@@ -37,7 +37,7 @@ exports.C = function(name, modelDesc, model) {
         model: model,
         sync: function(method, model, opts) {
             var config = model.config || {}, type = (config.adapter ? config.adapter.type : null) || "localDefault";
-            type === "localDefault" && (type = "sql");
+            "localDefault" === type && (type = "sql");
             require("alloy/sync/" + type).sync(model, method, opts);
         }
     }, Collection = Backbone.Collection.extend(extendObj), config = Collection.prototype.config = model.prototype.config, type = (config.adapter ? config.adapter.type : null) || "localDefault", adapter = require("alloy/sync/" + type);
@@ -46,9 +46,9 @@ exports.C = function(name, modelDesc, model) {
     return Collection;
 };
 
-exports.A = function(t, type, parent) {
+exports.A = function(t) {
     _.extend(t, Backbone.Events);
-    (function() {
+    !function() {
         var al = t.addEventListener, rl = t.removeEventListener, oo = t.on, of = t.off, tg = t.trigger, cbs = {}, ctx = _.extend({}, Backbone.Events);
         if (!al || !rl) return;
         t.trigger = function() {
@@ -74,14 +74,14 @@ exports.A = function(t, type, parent) {
             if (f) {
                 _.bind(of, ctx, e, cb, context)();
                 delete cbs[e][cb];
-                if (cbs[e].length === 0) {
+                if (0 === cbs[e].length) {
                     delete cbs[e];
                     rl(e, f);
                 }
                 f = null;
             }
         };
-    })();
+    }();
     return t;
 };
 
@@ -126,7 +126,7 @@ exports.createCollection = function(name, args) {
 };
 
 exports.isTablet = function() {
-    return Ti.Platform.osname === "ipad";
+    return "ipad" === Ti.Platform.osname;
 }();
 
 exports.isHandheld = !exports.isTablet;
