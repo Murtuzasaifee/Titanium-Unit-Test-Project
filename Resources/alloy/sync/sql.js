@@ -8,7 +8,7 @@ function guid() {
 
 function InitAdapter() {
     if (!db) {
-        if ("mobileweb" === Ti.Platform.osname || "undefined" == typeof Ti.Database) throw "No support for Titanium.Database in MobileWeb environment.";
+        if (false || "undefined" == typeof Ti.Database) throw "No support for Titanium.Database in MobileWeb environment.";
         db = Ti.Database.open("_alloy_");
         module.exports.db = db;
         db.execute("CREATE TABLE IF NOT EXISTS migrations (latest TEXT, model TEXT)");
